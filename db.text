@@ -1,0 +1,146 @@
+-- Crear usuario de conexión para la base de datos
+CREATE USER IF NOT EXISTS 'kemelOnlineWeb'@'localhost' IDENTIFIED BY 'Kemel2025@';
+GRANT ALL PRIVILEGES ON kemelOnline.* TO 'kemelOnlineWeb'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Eliminar y crear la base de datos
+DROP DATABASE IF EXISTS kemelOnline;
+CREATE DATABASE kemelOnline;
+USE kemelOnline;
+
+-- Tabla: Ciudades
+CREATE TABLE ciudades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo'
+);
+
+-- Tabla: Usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(100) UNIQUE NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    clave VARCHAR(255) NOT NULL,
+    correo VARCHAR(100) UNIQUE,
+    telefono VARCHAR(20) NOT NULL,
+    direccion VARCHAR(255) NOT NULL,
+    ciudad_id INT,
+    rol ENUM('admin','cliente','panaderia') DEFAULT 'cliente',
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (ciudad_id) REFERENCES ciudades(id)
+);
+
+-- Tabla: Productos
+CREATE TABLE productos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    imagen LONGBLOB,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    creado_por INT,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id)
+);
+
+-- Tabla: Pedidos
+CREATE TABLE pedidos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT,
+    fecha_pedido DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('pendiente', 'aprobado', 'preparado', 'entregado', 'cancelado') DEFAULT 'pendiente',
+    direccion_entrega VARCHAR(255),
+    ciudad_id INT,
+    total DECIMAL(10,2),
+    estado_registro ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (ciudad_id) REFERENCES ciudades(id)
+);
+
+-- Tabla: Detalles del pedido
+CREATE TABLE pedido_detalles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    producto_id INT,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2),
+    estado ENUM('pendiente', 'aprobado', 'preparado', 'entregado', 'cancelado') DEFAULT 'pendiente',
+    estado_registro ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    subtotal DECIMAL(10,2),
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Tabla: Pagos
+CREATE TABLE pagos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    monto DECIMAL(10,2) NOT NULL,
+    metodo_pago ENUM('efectivo', 'tarjeta', 'transferencia'),
+    fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
+    confirmado BOOLEAN DEFAULT FALSE,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+);
+
+-- Tabla: Historial de estados del pedido
+CREATE TABLE historial_pedido (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    estado_anterior ENUM('pendiente', 'procesado', 'enviado', 'entregado', 'cancelado'),
+    nuevo_estado ENUM('pendiente', 'procesado', 'enviado', 'entregado', 'cancelado'),
+    fecha_cambio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cambiado_por INT,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+    FOREIGN KEY (cambiado_por) REFERENCES usuarios(id)
+);
+
+-- Tabla: facturas
+CREATE TABLE facturas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2),
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+);
+
+-- Tabla: inventario
+CREATE TABLE inventario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT,
+    cantidad INT NOT NULL,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Tabla: auditoria
+CREATE TABLE auditoria (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT,
+    accion VARCHAR(255) NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Tabla: condiciones_pan
+CREATE TABLE condiciones_pan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT,
+    condiciones TEXT NOT NULL,
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Tabla: beneficios_pan
+CREATE TABLE beneficios_pan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT,
+    descripcion TEXT NOT NULL,
+    calorias DECIMAL(10,2),
+    estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
