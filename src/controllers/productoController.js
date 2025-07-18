@@ -6,7 +6,8 @@ class productosController {
       const productos = await producto.getAll();
       return res.status(200).json(productos);
     } catch (error) {
-      return res.status(500).json({ error: "Error interno en el servidor" });
+      console.error('Error en getAllProductos:', error);
+      return res.status(500).json({ error: "Error interno en el servidor", detalle: error.message });
     }
   };
 
@@ -17,7 +18,8 @@ class productosController {
       if (!prod) return res.status(404).json({ error: "Producto no encontrado" });
       return res.status(200).json(prod);
     } catch (error) {
-      return res.status(500).json({ error: "Error interno en el servidor" });
+      console.error('Error en getProductoById:', error);
+      return res.status(500).json({ error: "Error interno en el servidor", detalle: error.message });
     }
   };
 
@@ -27,7 +29,8 @@ class productosController {
       const nuevo = await producto.create({ nombre, descripcion, precio, imagen, creado_por });
       return res.status(201).json({ id: nuevo.id, message: "Producto creado" });
     } catch (error) {
-      return res.status(500).json({ error: "Error al crear el producto" });
+      console.error('Error en createProducto:', error);
+      return res.status(500).json({ error: "Error al crear el producto", detalle: error.message });
     }
   };
 
@@ -39,7 +42,8 @@ class productosController {
       if (!actualizado) return res.status(404).json({ error: "Producto no encontrado" });
       return res.status(200).json({ message: "Producto actualizado" });
     } catch (error) {
-      return res.status(500).json({ error: "Error al actualizar el producto" });
+      console.error('Error en updateProducto:', error);
+      return res.status(500).json({ error: "Error al actualizar el producto", detalle: error.message });
     }
   };
 
@@ -50,8 +54,10 @@ class productosController {
       if (!eliminado) return res.status(404).json({ error: "Producto no encontrado" });
       return res.status(200).json({ message: "Producto eliminado" });
     } catch (error) {
-      return res.status(500).json({ error: "Error al eliminar el producto" });
+      console.error('Error en deleteProducto:', error);
+      return res.status(500).json({ error: "Error al eliminar el producto", detalle: error.message });
     }
   };
 }
+
 export default productosController;

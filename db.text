@@ -47,6 +47,7 @@ CREATE TABLE productos (
 -- Tabla: Pedidos
 CREATE TABLE pedidos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     usuario_id INT,
     fecha_pedido DATETIME DEFAULT CURRENT_TIMESTAMP,
     estado ENUM('pendiente', 'aprobado', 'preparado', 'entregado', 'cancelado') DEFAULT 'pendiente',
@@ -61,6 +62,7 @@ CREATE TABLE pedidos (
 -- Tabla: Detalles del pedido
 CREATE TABLE pedido_detalles (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     pedido_id INT,
     producto_id INT,
     cantidad INT NOT NULL,
@@ -75,6 +77,7 @@ CREATE TABLE pedido_detalles (
 -- Tabla: Pagos
 CREATE TABLE pagos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     pedido_id INT,
     monto DECIMAL(10,2) NOT NULL,
     metodo_pago ENUM('efectivo', 'tarjeta', 'transferencia'),
@@ -87,6 +90,7 @@ CREATE TABLE pagos (
 -- Tabla: Historial de estados del pedido
 CREATE TABLE historial_pedido (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     pedido_id INT,
     estado_anterior ENUM('pendiente', 'procesado', 'enviado', 'entregado', 'cancelado'),
     nuevo_estado ENUM('pendiente', 'procesado', 'enviado', 'entregado', 'cancelado'),
@@ -100,6 +104,7 @@ CREATE TABLE historial_pedido (
 -- Tabla: facturas
 CREATE TABLE facturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     pedido_id INT,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10,2),
@@ -110,6 +115,7 @@ CREATE TABLE facturas (
 -- Tabla: inventario
 CREATE TABLE inventario (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     producto_id INT,
     cantidad INT NOT NULL,
     estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
@@ -119,6 +125,7 @@ CREATE TABLE inventario (
 -- Tabla: auditoria
 CREATE TABLE auditoria (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     usuario_id INT,
     accion VARCHAR(255) NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -129,6 +136,7 @@ CREATE TABLE auditoria (
 -- Tabla: condiciones_pan
 CREATE TABLE condiciones_pan (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     producto_id INT,
     condiciones TEXT NOT NULL,
     estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
@@ -138,9 +146,34 @@ CREATE TABLE condiciones_pan (
 -- Tabla: beneficios_pan
 CREATE TABLE beneficios_pan (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     producto_id INT,
     descripcion TEXT NOT NULL,
     calorias DECIMAL(10,2),
     estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
     FOREIGN KEY (producto_id) REFERENCES productos(id)
 );
+
+-- Insertar ciudad para el usuario admin
+INSERT INTO ciudades (nombre, estado) VALUES ('Ciudad Admin', 'activo');
+
+-- Insertar usuario admin
+INSERT INTO usuarios (usuario, nombre, clave, correo, telefono, direccion, ciudad_id, rol, estado)
+VALUES ('admin', 'Administrador', 'admin123', 'admin@kemel.com', '1234567890', 'Dirección admin', 1, 'admin', 'activo');
+
+-- Insertar productos de pan
+INSERT INTO productos (nombre, descripcion, precio, imagen, fecha_creacion, creado_por, estado)
+VALUES
+('Pan Integral', 'Pan elaborado con harina integral, alto en fibra y bajo en grasas.', 4500, 'src/img/pan_integral.jpg', NOW(), 1, 'activo'),
+('Pan Sin Gluten', 'Pan especial para personas con intolerancia al gluten, suave y nutritivo.', 5000, 'src/img/pan_sin_gluten.jpg', NOW(), 1, 'activo'),
+('Pan Multigrano', 'Pan con mezcla de granos y semillas, fuente de energía y proteínas.', 4800, 'src/img/pan_multigrano.jpg', NOW(), 1, 'activo'),
+('Pan Bajo en Sodio', 'Pan recomendado para dietas bajas en sal, ideal para hipertensos.', 4700, 'src/img/pan_bajo_sodio.jpg', NOW(), 1, 'activo'),
+('Pan Proteico', 'Pan enriquecido con proteínas, perfecto para deportistas y personas activas.', 5200, 'src/img/pan_proteico.jpg', NOW(), 1, 'activo');
+
+-- Insertar ciudades principales
+INSERT INTO ciudades (nombre, estado) VALUES
+('Bucaramanga', 'activo'),
+('Floridablanca', 'activo'),
+('Giron', 'activo'),
+('Piedecuesta', 'activo');
+

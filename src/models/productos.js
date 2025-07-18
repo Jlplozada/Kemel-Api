@@ -3,11 +3,15 @@ import connection from "../utils/db.js"
 class producto {
   async getAll() {
     try {
-      // Volver a incluir el campo imagen en la consulta general
-      const [rows] = await connection.query("SELECT * FROM productos");
-      return rows;
+      const [rows] = await connection.query("SELECT * FROM productos WHERE estado = 'activo'");
+      // Ajusta la ruta de la imagen para el frontend
+      return rows.map(prod => ({
+        ...prod,
+        imagen: typeof prod.imagen === 'string' ? `/api/productos/img/${prod.imagen.split('/').pop()}` : null
+      }));
     } catch (error) {
-      throw new Error("Error al obtener los productos");
+      console.error('Error en modelo productos.getAll:', error);
+      throw error;
     }
   }
 
@@ -46,7 +50,8 @@ class producto {
 
   async delete(id) {
     try {
-      const [result] = await connection.query("DELETE FROM productos WHERE id = ?", [id]);
+      // Eliminación lógica: solo cambia el estado a 'eliminado'
+      const [result] = await connection.query("UPDATE productos SET estado = 'eliminado' WHERE id = ?", [id]);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error("Error al eliminar el producto");
