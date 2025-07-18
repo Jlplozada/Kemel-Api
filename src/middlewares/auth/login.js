@@ -1,24 +1,82 @@
 import { usuarios } from "../../models/usuarios.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { ResponseProvider } from "../../providers/ResponseProvider.js";
+
+dotenv.config();
 
 export async function loginUsuario(req, res) {
   const { email, clave } = req.body;
-  if (!email || !clave) {
-    return res.status(400).json({ error: "Email y clave requeridos" });
-  }
+  
   try {
+    // Buscar el usuario por email
     const user = await usuarios.findByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: "Usuario o clave incorrectos" });
+      return ResponseProvider.unauthorized(
+        res,
+        "Credenciales incorrectas"
+      );
     }
+
+    // Verificar la contraseña
     const match = await bcrypt.compare(clave, user.clave);
     if (!match) {
-      return res.status(401).json({ error: "Usuario o clave incorrectos" });
+      return ResponseProvider.unauthorized(
+        res,
+        "Credenciales incorrectas"
+      );
     }
-    const token = jwt.sign({ id: user.id, email: user.correo }, process.env.JWT_SECRET || "secreto", { expiresIn: "1d" });
-    return res.status(200).json({ token, usuario: { id: user.id, nombre: user.nombre, correo: user.correo } });
+
+    // Generar tokens incluyendo el rol del usuario
+    const accessToken = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.correo,
+        nombre: user.nombre,
+        rol: user.rol || 'cliente' // Incluir el rol en el token
+      }, 
+      process.env.ACCESS_TOKEN_SECRET || "secreto_access", 
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.correo, 
+        rol: user.rol || 'cliente' // Incluir el rol en el refresh token también
+      }, 
+      process.env.REFRESH_TOKEN_SECRET || "secreto_refresh", 
+      { expiresIn: "7d" }
+    );
+
+    // Guardar el refresh token en la base de datos
+    await usuarios.updateRefreshToken(user.id, refreshToken);
+
+    // Enviar respuesta exitosa incluyendo el rol
+    return ResponseProvider.success(
+      res,
+      "Login exitoso",
+      {
+        token: accessToken,
+        refreshToken: refreshToken,
+        usuario: {
+          id: user.id,
+          nombre: user.nombre,
+          correo: user.correo,
+          telefono: user.telefono,
+          direccion: user.direccion,
+          ciudad: user.ciudad,
+          rol: user.rol || 'cliente' // Incluir el rol en la respuesta
+        }
+      }
+    );
+
   } catch (error) {
-    return res.status(500).json({ error: "Error en el login" });
+    console.error('Error en login:', error);
+    return ResponseProvider.serverError(
+      res,
+      "Error interno del servidor"
+    );
   }
 }

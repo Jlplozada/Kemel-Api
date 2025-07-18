@@ -22,10 +22,11 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100) NOT NULL,
     clave VARCHAR(255) NOT NULL,
     correo VARCHAR(100) UNIQUE,
-    telefono VARCHAR(20) NOT NULL,
-    direccion VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20),
+    direccion VARCHAR(255),
     ciudad_id INT,
     rol ENUM('admin','cliente','panaderia') DEFAULT 'cliente',
+    refresh_token TEXT,
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
     estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
     FOREIGN KEY (ciudad_id) REFERENCES ciudades(id)
@@ -37,7 +38,7 @@ CREATE TABLE productos (
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,
     precio DECIMAL(10,2) NOT NULL,
-    imagen LONGBLOB,
+    imagen VARCHAR(255),
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     creado_por INT,
     estado ENUM('activo', 'inactivo', 'eliminado') DEFAULT 'activo',
@@ -156,7 +157,6 @@ CREATE TABLE beneficios_pan (
 
 -- Insertar ciudades principales primero
 INSERT INTO ciudades (nombre, estado) VALUES
-('Ciudad Admin', 'activo'),
 ('Bucaramanga', 'activo'),
 ('Floridablanca', 'activo'),
 ('Giron', 'activo'),
@@ -175,3 +175,7 @@ VALUES
 ('Pan Bajo en Sodio', 'Pan recomendado para dietas bajas en sal, ideal para hipertensos.', 4700, 'src/img/pan_bajo_sodio.jpg', NOW(), 1, 'activo'),
 ('Pan Proteico', 'Pan enriquecido con proteínas, perfecto para deportistas y personas activas.', 5200, 'src/img/pan_proteico.jpg', NOW(), 1, 'activo');
 
+use kemelonline;
+select * from ciudades;
+select * from usuarios;
+select * from productos;
