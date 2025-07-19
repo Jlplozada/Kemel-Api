@@ -103,6 +103,64 @@ class productosController {
       return res.status(500).json({ error: "Error al restaurar el producto", detalle: error.message });
     }
   };
+
+  static cambiarEstadoProducto = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+
+      console.log("=== CAMBIAR ESTADO PRODUCTO ===");
+      console.log("ID Producto:", id);
+      console.log("Nuevo estado:", estado);
+
+      if (!estado || !['activo', 'inactivo', 'eliminado'].includes(estado)) {
+        return res.status(400).json({
+          success: false,
+          error: "Estado debe ser 'activo', 'inactivo' o 'eliminado'"
+        });
+      }
+
+      // Verificar que el producto existe
+      const productoExistente = await producto.getById(id);
+      if (!productoExistente) {
+        return res.status(404).json({
+          success: false,
+          error: "Producto no encontrado"
+        });
+      }
+
+      console.log("Producto encontrado:", productoExistente.nombre);
+      console.log("Estado actual:", productoExistente.estado);
+
+      // Actualizar estado
+      const resultado = await producto.updateEstado(id, estado);
+      console.log("Resultado de actualización:", resultado);
+
+      if (resultado.affectedRows === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "No se pudo actualizar el estado del producto"
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: { 
+          id, 
+          estado_anterior: productoExistente.estado,
+          estado_nuevo: estado 
+        },
+        message: `Estado del producto actualizado a ${estado}`
+      });
+    } catch (error) {
+      console.error('Error en cambiarEstadoProducto:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Error interno del servidor",
+        detalle: error.message
+      });
+    }
+  };
 }
 
 export default productosController;

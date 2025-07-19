@@ -15,18 +15,21 @@ router.post('/', pedidosController.crearPedido);
 router.get('/mis-pedidos', pedidosController.obtenerPedidosUsuario);
 
 // Ruta específica para panaderos - solo pedidos pendientes
-router.get('/pendientes', verificarRol(['panaderia']), pedidosController.obtenerPedidosPendientes);
+router.get('/pendientes', verificarRol('panaderia'), pedidosController.obtenerPedidosPendientes);
 
 // Ruta específica para administradores - todos los pedidos activos
-router.get('/admin', verificarRol(['admin']), pedidosController.obtenerPedidosAdmin);
+router.get('/admin', verificarRol('admin'), pedidosController.obtenerPedidosAdmin);
 
 // Obtener todos los pedidos (solo para administradores y panaderos)
-router.get('/', verificarRol(['admin', 'panaderia']), pedidosController.obtenerTodosPedidos);
+router.get('/', verificarRol('admin', 'panaderia'), pedidosController.obtenerTodosPedidos);
+
+// Obtener detalles completos de un pedido (solo administradores)
+router.get('/:id/detalle', verificarRol('admin'), pedidosController.obtenerDetallePedido);
 
 // Actualizar estado de un pedido (solo para administradores y panaderos)
-router.put('/:id/estado', verificarRol(['admin', 'panaderia']), pedidosController.actualizarEstadoPedido);
+router.put('/:id/estado', verificarRol('admin', 'panaderia'), pedidosController.actualizarEstadoPedido);
 
 // Eliminar pedido (solo administradores)
-router.delete('/:id', verificarRol(['admin']), pedidosController.eliminarPedido);
+router.delete('/:id', verificarRol('admin'), pedidosController.eliminarPedido);
 
 export default router;

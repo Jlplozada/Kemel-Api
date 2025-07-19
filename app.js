@@ -52,6 +52,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Servidor API corriendo en http://localhost:${port}`);
-  console.log(`📁 Imágenes disponibles en http://localhost:${port}/img/`);
+  console.log(`Servidor API en http://localhost:${port}`);
+  console.log(`Imágenes en http://localhost:${port}/img/`);
 });

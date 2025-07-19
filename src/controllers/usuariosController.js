@@ -196,7 +196,12 @@ class UsuariosController {
             console.log("Filtro rol:", req.query.rol);
 
             const filtroRol = req.query.rol || null;
-            const todosUsuarios = await usuarios.findAllActive(filtroRol);
+            const usuarioActualId = req.user.id; // ID del usuario que está logueado
+            
+            console.log("Excluir usuario ID:", usuarioActualId);
+            
+            // Obtener usuarios activos excluyendo al usuario actual
+            const todosUsuarios = await usuarios.findAllActive(filtroRol, usuarioActualId);
             
             // Remover contraseñas y tokens de la respuesta
             const usuariosSinDatosSensibles = todosUsuarios.map(usuario => {
@@ -300,6 +305,72 @@ class UsuariosController {
             });
         } catch (error) {
             console.error('Error en eliminarUsuario:', error);
+            return res.status(500).json({
+                success: false,
+                error: "Error interno del servidor",
+                detalle: error.message
+            });
+        }
+    };
+
+    static cambiarEstadoUsuario = async (req, res) => {
+        try {
+            console.log("=== CAMBIAR ESTADO USUARIO ===");
+            const { id } = req.params;
+            const { estado_registro } = req.body;
+
+            console.log("ID Usuario:", id);
+            console.log("Nuevo estado:", estado_registro);
+            console.log("Usuario que hace el cambio:", req.user);
+
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    error: "ID de usuario es requerido"
+                });
+            }
+
+            if (!estado_registro || !['activo', 'inactivo'].includes(estado_registro)) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Estado debe ser 'activo' o 'inactivo'"
+                });
+            }
+
+            // Verificar que el usuario existe
+            const usuarioExistente = await usuarios.getById(id);
+            if (!usuarioExistente) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Usuario no encontrado"
+                });
+            }
+
+            console.log("Usuario encontrado:", usuarioExistente.usuario);
+            console.log("Estado actual:", usuarioExistente.estado_registro);
+
+            // Actualizar estado
+            const resultado = await usuarios.updateEstado(id, estado_registro);
+            console.log("Resultado de actualización:", resultado);
+
+            if (resultado.affectedRows === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: "No se pudo actualizar el estado del usuario"
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: { 
+                    id, 
+                    estado_anterior: usuarioExistente.estado_registro,
+                    estado_nuevo: estado_registro 
+                },
+                message: `Estado del usuario actualizado a ${estado_registro}`
+            });
+        } catch (error) {
+            console.error('Error en cambiarEstadoUsuario:', error);
             return res.status(500).json({
                 success: false,
                 error: "Error interno del servidor",

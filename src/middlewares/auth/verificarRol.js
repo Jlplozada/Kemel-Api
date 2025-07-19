@@ -6,8 +6,13 @@ import { ResponseProvider } from "../../providers/ResponseProvider.js";
  */
 export function verificarRol(...rolesPermitidos) {
   return (req, res, next) => {
+    console.log("=== DEBUG VERIFICAR ROL ===");
+    console.log("Roles permitidos:", rolesPermitidos);
+    console.log("Usuario en req.user:", req.user);
+    
     // Verificar que el usuario esté autenticado (debe tener req.user del verifyToken)
     if (!req.user) {
+      console.log("❌ Usuario no autenticado - req.user está vacío");
       return ResponseProvider.unauthorized(
         res,
         "Usuario no autenticado"
@@ -16,17 +21,20 @@ export function verificarRol(...rolesPermitidos) {
 
     // Obtener el rol del usuario del token
     const rolUsuario = req.user.rol || 'cliente';
+    console.log("Rol del usuario:", rolUsuario);
+    console.log("¿Rol está en la lista permitida?", rolesPermitidos.includes(rolUsuario));
 
     // Verificar si el rol del usuario está en la lista de roles permitidos
     if (!rolesPermitidos.includes(rolUsuario)) {
+      console.log("❌ Acceso denegado por rol incorrecto");
       return ResponseProvider.forbidden(
         res,
-        `Acceso denegado. Se requiere uno de estos roles: ${rolesPermitidos.join(', ')}`
+        `Acceso denegado. Se requiere uno de estos roles: ${rolesPermitidos.join(', ')}. Tu rol es: ${rolUsuario}`
       );
     }
 
     // Si el usuario tiene el rol correcto, continuar
-    console.log(`Usuario ${req.user.nombre} con rol ${rolUsuario} accedió a ruta protegida`);
+    console.log(`✅ Usuario ${req.user.nombre} con rol ${rolUsuario} accedió a ruta protegida`);
     next();
   };
 }

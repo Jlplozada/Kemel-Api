@@ -100,8 +100,11 @@ export const pedidosController = {
       console.log("Usuario autenticado:", req.user);
 
       const pedidos = await Pedidos.findByEstado('pendiente');
+      
+      console.log("Pedidos encontrados:", pedidos.length);
+      console.log("Primer pedido (si existe):", pedidos[0]);
 
-      return ResponseProvider.success(res, pedidos, "Pedidos pendientes obtenidos exitosamente");
+      return ResponseProvider.success(res, "Pedidos pendientes obtenidos exitosamente", pedidos);
     } catch (error) {
       console.error("Error al obtener pedidos pendientes:", error);
       return ResponseProvider.error(res, "Error interno del servidor", 500);
@@ -118,7 +121,10 @@ export const pedidosController = {
       const filtroEstado = req.query.estado || null;
       const pedidos = await Pedidos.findAllActive(filtroEstado);
 
-      return ResponseProvider.success(res, pedidos, "Pedidos obtenidos exitosamente");
+      console.log("Pedidos encontrados para admin:", pedidos.length);
+      console.log("Primer pedido (si existe):", pedidos[0]);
+
+      return ResponseProvider.success(res, "Pedidos obtenidos exitosamente", pedidos);
     } catch (error) {
       console.error("Error al obtener pedidos admin:", error);
       return ResponseProvider.error(res, "Error interno del servidor", 500);
@@ -146,6 +152,34 @@ export const pedidosController = {
       return ResponseProvider.success(res, { id }, "Pedido eliminado exitosamente");
     } catch (error) {
       console.error("Error al eliminar pedido:", error);
+      return ResponseProvider.error(res, "Error interno del servidor", 500);
+    }
+  },
+
+  // Obtener detalles completos de un pedido (pedido + cliente + productos)
+  async obtenerDetallePedido(req, res) {
+    try {
+      console.log("=== OBTENER DETALLE PEDIDO ===");
+      const { id } = req.params;
+      console.log("ID del pedido:", id);
+      console.log("Usuario autenticado:", req.user);
+
+      if (!id) {
+        return ResponseProvider.error(res, "ID del pedido es requerido", 400);
+      }
+
+      // Obtener detalles completos del pedido
+      const detalles = await Pedidos.getDetailedById(id);
+
+      if (!detalles) {
+        return ResponseProvider.error(res, "Pedido no encontrado", 404);
+      }
+
+      console.log("Detalles encontrados:", detalles);
+
+      return ResponseProvider.success(res, detalles, "Detalles del pedido obtenidos exitosamente");
+    } catch (error) {
+      console.error("Error al obtener detalles del pedido:", error);
       return ResponseProvider.error(res, "Error interno del servidor", 500);
     }
   }

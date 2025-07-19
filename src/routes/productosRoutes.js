@@ -10,6 +10,7 @@ router.get("/admin/todos", productoController.getAllProductosAdmin);
 // Rutas con autenticación
 router.post("/", uploadSingle('imagen'), productoController.createProducto);
 router.put("/:id", uploadSingle('imagen'), productoController.updateProducto);
+router.put("/:id/estado", productoController.cambiarEstadoProducto);
 router.delete("/:id", productoController.deleteProducto);
 router.put("/:id/restaurar", productoController.restaurarProducto);
 

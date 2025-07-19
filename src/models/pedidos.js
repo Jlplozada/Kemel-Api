@@ -92,45 +92,76 @@ export class Pedidos {
   // Obtener pedidos por estado específico
   static async findByEstado(estado) {
     try {
-      const [rows] = await connection.query(`
+      console.log("=== MODELO: Buscando pedidos con estado:", estado, "===");
+      
+      // Primero obtener los pedidos básicos
+      const [pedidos] = await connection.query(`
         SELECT 
           p.*, 
-          u.nombre as nombre_usuario,
-          GROUP_CONCAT(
-            CONCAT(pr.nombre, ' (x', pd.cantidad, ')') 
-            SEPARATOR ', '
-          ) as productos_texto
+          u.nombre as nombre_usuario
         FROM pedidos p
         LEFT JOIN usuarios u ON p.usuario_id = u.id
-        LEFT JOIN pedido_detalles pd ON p.id = pd.pedido_id
-        LEFT JOIN productos pr ON pd.producto_id = pr.id
         WHERE p.estado = ? AND p.estado_registro = 'activo'
-        GROUP BY p.id
         ORDER BY p.fecha_pedido DESC
       `, [estado]);
       
-      return rows;
+      console.log("Pedidos básicos encontrados:", pedidos.length);
+      
+      if (pedidos.length === 0) {
+        console.log("No se encontraron pedidos con estado:", estado);
+        return [];
+      }
+      
+      // Para cada pedido, obtener sus productos
+      for (let pedido of pedidos) {
+        console.log(`Buscando productos para pedido ID: ${pedido.id}`);
+        
+        const [productos] = await connection.query(`
+          SELECT 
+            pd.cantidad,
+            pd.precio_unitario,
+            pd.subtotal,
+            pd.nombre as nombre_producto,
+            pr.id as producto_id,
+            pr.nombre as nombre_original
+          FROM pedido_detalles pd
+          LEFT JOIN productos pr ON pd.producto_id = pr.id
+          WHERE pd.pedido_id = ? AND pd.estado_registro = 'activo'
+        `, [pedido.id]);
+        
+        // Usar el nombre del detalle del pedido, no del producto original
+        const productosFormateados = productos.map(prod => ({
+          cantidad: prod.cantidad,
+          precio_unitario: prod.precio_unitario,
+          subtotal: prod.subtotal,
+          nombre: prod.nombre_producto || prod.nombre_original,
+          producto_id: prod.producto_id
+        }));
+        
+        pedido.productos = productosFormateados;
+        console.log(`Pedido ${pedido.id} tiene ${productosFormateados.length} productos:`, productosFormateados);
+      }
+      
+      console.log("Resultado final:", pedidos);
+      return pedidos;
     } catch (error) {
       console.error("Error al obtener pedidos por estado:", error);
-      throw new Error("Error al obtener pedidos por estado");
+      throw new Error("Error al obtener pedidos por estado: " + error.message);
     }
   }
 
   // Obtener todos los pedidos activos con filtro opcional por estado
   static async findAllActive(filtroEstado = null) {
     try {
+      console.log("=== MODELO: Buscando todos los pedidos activos. Filtro:", filtroEstado, "===");
+      
+      // Primero obtener los pedidos básicos
       let query = `
         SELECT 
           p.*, 
-          u.nombre as nombre_usuario,
-          GROUP_CONCAT(
-            CONCAT(pr.nombre, ' (x', pd.cantidad, ')') 
-            SEPARATOR ', '
-          ) as productos_texto
+          u.nombre as nombre_usuario
         FROM pedidos p
         LEFT JOIN usuarios u ON p.usuario_id = u.id
-        LEFT JOIN pedido_detalles pd ON p.id = pd.pedido_id
-        LEFT JOIN productos pr ON pd.producto_id = pr.id
         WHERE p.estado_registro = 'activo'
       `;
       
@@ -141,10 +172,49 @@ export class Pedidos {
         params.push(filtroEstado);
       }
       
-      query += ' GROUP BY p.id ORDER BY p.fecha_pedido DESC';
+      query += ' ORDER BY p.fecha_pedido DESC';
       
-      const [rows] = await connection.query(query, params);
-      return rows;
+      const [pedidos] = await connection.query(query, params);
+      
+      console.log("Pedidos básicos encontrados:", pedidos.length);
+      
+      if (pedidos.length === 0) {
+        console.log("No se encontraron pedidos");
+        return [];
+      }
+      
+      // Para cada pedido, obtener sus productos
+      for (let pedido of pedidos) {
+        console.log(`Buscando productos para pedido ID: ${pedido.id}`);
+        
+        const [productos] = await connection.query(`
+          SELECT 
+            pd.cantidad,
+            pd.precio_unitario,
+            pd.subtotal,
+            pd.nombre as nombre_producto,
+            pr.id as producto_id,
+            pr.nombre as nombre_original
+          FROM pedido_detalles pd
+          LEFT JOIN productos pr ON pd.producto_id = pr.id
+          WHERE pd.pedido_id = ? AND pd.estado_registro = 'activo'
+        `, [pedido.id]);
+        
+        // Usar el nombre del detalle del pedido, no del producto original
+        const productosFormateados = productos.map(prod => ({
+          cantidad: prod.cantidad,
+          precio_unitario: prod.precio_unitario,
+          subtotal: prod.subtotal,
+          nombre: prod.nombre_producto || prod.nombre_original,
+          producto_id: prod.producto_id
+        }));
+        
+        pedido.productos = productosFormateados;
+        console.log(`Pedido ${pedido.id} tiene ${productosFormateados.length} productos:`, productosFormateados);
+      }
+      
+      console.log("Resultado final admin:", pedidos);
+      return pedidos;
     } catch (error) {
       console.error("Error al obtener todos los pedidos activos:", error);
       throw new Error("Error al obtener pedidos activos");
@@ -162,6 +232,86 @@ export class Pedidos {
     } catch (error) {
       console.error("Error al eliminar pedido:", error);
       throw new Error("Error al eliminar el pedido");
+    }
+  }
+
+  // Obtener detalles completos de un pedido (pedido + cliente + productos)
+  static async getDetailedById(pedido_id) {
+    try {
+      console.log("=== MODELO getDetailedById ===");
+      console.log("Buscando pedido ID:", pedido_id);
+
+      // Obtener información del pedido y cliente
+      const [pedidoRows] = await connection.query(`
+        SELECT 
+          p.id,
+          p.nombre,
+          p.fecha_pedido,
+          p.total,
+          p.estado,
+          p.direccion_entrega,
+          p.notas,
+          u.id as cliente_id,
+          u.nombre as cliente_nombre,
+          u.correo as cliente_correo,
+          u.telefono as cliente_telefono,
+          u.direccion as cliente_direccion
+        FROM pedidos p
+        INNER JOIN usuarios u ON p.usuario_id = u.id
+        WHERE p.id = ? AND p.estado_registro = 'activo'
+      `, [pedido_id]);
+
+      if (pedidoRows.length === 0) {
+        console.log("Pedido no encontrado");
+        return null;
+      }
+
+      const pedidoData = pedidoRows[0];
+      console.log("Pedido encontrado:", pedidoData);
+
+      // Obtener productos del pedido
+      const [productosRows] = await connection.query(`
+        SELECT 
+          pr.id,
+          pr.nombre,
+          pr.descripcion,
+          pr.precio as precio_unitario,
+          pr.imagen,
+          pp.cantidad
+        FROM pedido_productos pp
+        INNER JOIN productos pr ON pp.producto_id = pr.id
+        WHERE pp.pedido_id = ?
+      `, [pedido_id]);
+
+      console.log("Productos encontrados:", productosRows);
+
+      // Estructurar la respuesta
+      const resultado = {
+        pedido: {
+          id: pedidoData.id,
+          nombre: pedidoData.nombre,
+          fecha_pedido: pedidoData.fecha_pedido,
+          total: pedidoData.total,
+          estado: pedidoData.estado,
+          direccion_entrega: pedidoData.direccion_entrega,
+          notas: pedidoData.notas
+        },
+        cliente: {
+          id: pedidoData.cliente_id,
+          nombre: pedidoData.cliente_nombre,
+          correo: pedidoData.cliente_correo,
+          telefono: pedidoData.cliente_telefono,
+          direccion: pedidoData.cliente_direccion
+        },
+        productos: productosRows
+      };
+
+      console.log("Resultado estructurado:", resultado);
+      return resultado;
+
+    } catch (error) {
+      console.error("Error al obtener detalles del pedido:", error);
+      throw new Error("Error al obtener los detalles del pedido");
     }
   }
 }

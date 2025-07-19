@@ -19,6 +19,15 @@ export async function loginUsuario(req, res) {
       );
     }
 
+    // Verificar que el usuario no esté eliminado o inactivo
+    if (user.estado === 'eliminado' || user.estado === 'inactivo') {
+      console.log(`Intento de login con usuario ${user.estado}: ${usuario}`);
+      return ResponseProvider.unauthorized(
+        res,
+        "Usuario no disponible. Contacte al administrador."
+      );
+    }
+
     // Verificar la contraseña
     const match = await bcrypt.compare(clave, user.clave);
     if (!match) {

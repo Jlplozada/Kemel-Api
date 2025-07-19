@@ -95,5 +95,24 @@ class producto {
       throw new Error("Error al restaurar el producto");
     }
   }
+
+  async updateEstado(id, estado) {
+    try {
+      console.log("=== MODELO updateEstado ===");
+      console.log("ID:", id);
+      console.log("Estado:", estado);
+      
+      const [result] = await connection.query(
+        "UPDATE productos SET estado = ? WHERE id = ?",
+        [estado, id]
+      );
+      
+      console.log("Resultado BD:", result);
+      return result;
+    } catch (error) {
+      console.error('Error en modelo updateEstado:', error);
+      throw new Error("Error al actualizar el estado del producto");
+    }
+  }
 }
 export default new producto();

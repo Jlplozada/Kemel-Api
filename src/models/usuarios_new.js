@@ -104,8 +104,8 @@ export class usuarios{
             `);
             return rows;
         } catch (error) {
-            console.error('Error en modelo usuarios.getAllAdmin:', error);
-            throw error;
+            console.error("Error al obtener todos los usuarios:", error);
+            throw new Error("Error al obtener usuarios");
         }
     }
 
@@ -119,51 +119,38 @@ export class usuarios{
             `, [id]);
             return rows[0];
         } catch (error) {
-            throw new Error("Error al obtener el usuario");
+            console.error("Error al obtener usuario por ID:", error);
+            throw new Error("Error al obtener usuario");
         }
     }
 
-    static async updateUsuario(id, { usuario, nombre, correo, telefono, direccion, ciudad_id, rol }) {
+    static async updateUsuario(id, datosUsuario) {
         try {
-            let query = `UPDATE usuarios SET usuario = ?, nombre = ?, correo = ?, telefono = ?, direccion = ?, ciudad_id = ?`;
-            let params = [usuario, nombre, correo, telefono, direccion, ciudad_id];
+            const campos = [];
+            const valores = [];
             
-            if (rol !== undefined) {
-                query += `, rol = ?`;
-                params.push(rol);
-            }
+            // Construir query dinámicamente
+            Object.keys(datosUsuario).forEach(campo => {
+                if (datosUsuario[campo] !== undefined) {
+                    campos.push(`${campo} = ?`);
+                    valores.push(datosUsuario[campo]);
+                }
+            });
             
-            query += ` WHERE id = ?`;
-            params.push(id);
+            valores.push(id); // Agregar ID al final para WHERE
             
-            const [result] = await db.query(query, params);
-            return result.affectedRows > 0;
+            const [result] = await db.query(
+                `UPDATE usuarios SET ${campos.join(', ')} WHERE id = ?`,
+                valores
+            );
+            return result;
         } catch (error) {
-            throw new Error("Error al actualizar el usuario");
+            console.error("Error al actualizar usuario:", error);
+            throw new Error("Error al actualizar usuario");
         }
     }
 
-    static async deleteUsuario(id) {
-        try {
-            // Eliminación lógica: solo cambia el estado a 'eliminado'
-            const [result] = await db.query("UPDATE usuarios SET estado = 'eliminado' WHERE id = ?", [id]);
-            return result.affectedRows > 0;
-        } catch (error) {
-            throw new Error("Error al eliminar el usuario");
-        }
-    }
-
-    static async restaurarUsuario(id) {
-        try {
-            // Restaurar usuario: cambiar estado a 'activo'
-            const [result] = await db.query("UPDATE usuarios SET estado = 'activo' WHERE id = ?", [id]);
-            return result.affectedRows > 0;
-        } catch (error) {
-            throw new Error("Error al restaurar el usuario");
-        }
-    }
-
-    // Obtener todos los usuarios activos con filtro opcional por rol
+    // Obtener todos los usuarios activos para administración
     static async findAllActive(filtroRol = null, excludeUserId = null) {
         try {
             console.log("=== FINDALLACTIVE USUARIOS ===");
@@ -227,45 +214,11 @@ export class usuarios{
         }
     }
 
-    // Actualizar estado de usuario
-    static async updateEstado(id, estado_registro) {
-        try {
-            console.log("=== UPDATE ESTADO USUARIO MODEL ===");
-            console.log("ID:", id);
-            console.log("Nuevo estado:", estado_registro);
-            
-            const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = ? WHERE id = ?",
-                [estado_registro, id]
-            );
-            
-            console.log("Resultado de actualización:", result);
-            return result;
-        } catch (error) {
-            console.error("Error al actualizar estado del usuario:", error);
-            throw new Error("Error al actualizar estado del usuario");
-        }
-    }
-
-    // Actualizar estado de usuario
-    static async updateEstado(id, estado_registro) {
-        try {
-            const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = ? WHERE id = ?",
-                [estado_registro, id]
-            );
-            return result;
-        } catch (error) {
-            console.error("Error al actualizar estado del usuario:", error);
-            throw new Error("Error al actualizar estado del usuario");
-        }
-    }
-
     // Eliminar usuario (cambiar estado a eliminado)
     static async delete(id) {
         try {
             const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = 'inactivo' WHERE id = ?",
+                "UPDATE usuarios SET estado = 'eliminado' WHERE id = ?",
                 [id]
             );
             return result;
