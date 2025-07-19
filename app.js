@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import productoRoutes from './src/routes/productosRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import usuarioRoutes from './src/routes/usuarioRoutes.js';
+import pedidosRoutes from './src/routes/pedidosRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import db from './src/utils/db.js';
@@ -33,6 +34,7 @@ app.use('/img', express.static(path.join(__dirname, 'src/img')));
 app.use('/productos', productoRoutes);
 app.use('/auth', authRoutes);
 app.use('/usuarios', usuarioRoutes);
+app.use('/pedidos', pedidosRoutes);
 
 // Endpoint para obtener la lista de ciudades
 app.get('/ciudades', async (req, res) => {

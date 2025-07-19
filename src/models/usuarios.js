@@ -162,4 +162,53 @@ export class usuarios{
             throw new Error("Error al restaurar el usuario");
         }
     }
+
+    // Obtener todos los usuarios activos con filtro opcional por rol
+    static async findAllActive(filtroRol = null) {
+        try {
+            let query = "SELECT * FROM usuarios WHERE estado = 'activo'";
+            const params = [];
+            
+            if (filtroRol) {
+                query += ' AND rol = ?';
+                params.push(filtroRol);
+            }
+            
+            query += ' ORDER BY fecha_registro DESC';
+            
+            const [rows] = await db.query(query, params);
+            return rows;
+        } catch (error) {
+            console.error("Error al obtener usuarios activos:", error);
+            throw new Error("Error al obtener usuarios activos");
+        }
+    }
+
+    // Actualizar rol de usuario
+    static async updateRol(id, rol) {
+        try {
+            const [result] = await db.query(
+                "UPDATE usuarios SET rol = ? WHERE id = ? AND estado = 'activo'",
+                [rol, id]
+            );
+            return result;
+        } catch (error) {
+            console.error("Error al actualizar rol del usuario:", error);
+            throw new Error("Error al actualizar rol del usuario");
+        }
+    }
+
+    // Eliminar usuario (cambiar estado a eliminado)
+    static async delete(id) {
+        try {
+            const [result] = await db.query(
+                "UPDATE usuarios SET estado = 'eliminado' WHERE id = ?",
+                [id]
+            );
+            return result;
+        } catch (error) {
+            console.error("Error al eliminar usuario:", error);
+            throw new Error("Error al eliminar el usuario");
+        }
+    }
 }

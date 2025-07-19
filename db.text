@@ -176,6 +176,13 @@ VALUES
 ('Pan Banano Nuez 125g', 'Pan nutritivo con banano maduro y nueces crujientes, rico en potasio y omega 3.', 16500, '1.png', NOW(), 1, 'activo'),
 ('Pan Banano Nuez 200g', 'Pan nutritivo con banano maduro y nueces crujientes, rico en potasio y omega 3. Tamaño familiar.', 26500, '2.png', NOW(), 1, 'activo');
 
+-- Corregir el rol del usuario panadero
+UPDATE usuarios SET rol = 'panaderia' WHERE id = 2 AND usuario = 'panadero';
+
+-- Insertar un usuario panadero adicional para pruebas
+INSERT INTO usuarios (usuario, nombre, clave, correo, telefono, direccion, ciudad_id, rol, estado)
+VALUES ('panadero2', 'Panadero Dos', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'panadero2@kemel.com', '3001234567', 'Calle Panadería 123', 1, 'panaderia', 'activo');
+
 use kemelonline;
 select * from ciudades;
 select * from usuarios;

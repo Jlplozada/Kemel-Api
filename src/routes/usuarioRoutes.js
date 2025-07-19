@@ -9,6 +9,15 @@ import { verificarRol } from "../middlewares/auth/verificarRol.js";
 
 const router = express.Router();
 
+// Ruta específica para administradores - obtener todos los usuarios activos
+router.get('/admin', verifyToken, verificarRol(['admin']), UsuariosController.obtenerUsuariosAdmin);
+
+// Ruta para cambiar rol de usuario (solo administradores)
+router.put('/:id/rol', verifyToken, verificarRol(['admin']), UsuariosController.cambiarRolUsuario);
+
+// Ruta para eliminar usuario (solo administradores)
+router.delete('/:id', verifyToken, verificarRol(['admin']), UsuariosController.eliminarUsuario);
+
 // Ruta para registrar un nuevo usuario
 router.post('/registro', validateRegistro, async (req, res) => {
   const { nombre, email, password, telefono, direccion, ciudad } = req.body;
@@ -209,6 +218,10 @@ router.get('/admin/:id', verifyToken, verificarRol(['admin']), UsuariosControlle
 
 // Actualizar un usuario (solo para administradores)
 router.put('/admin/:id', verifyToken, verificarRol(['admin']), UsuariosController.updateUsuario);
+
+// === RUTA PARA ACTUALIZAR CUENTA PROPIA ===
+// Cualquier usuario autenticado puede actualizar su propia cuenta
+router.put('/:id', verifyToken, UsuariosController.updateUsuario);
 
 // Eliminar un usuario (cambiar estado) (solo para administradores)
 router.delete('/admin/:id', verifyToken, verificarRol(['admin']), UsuariosController.deleteUsuario);
