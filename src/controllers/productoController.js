@@ -84,11 +84,21 @@ class productosController {
 
   static getAllProductosAdmin = async (req, res) => {
     try {
+      console.log("=== OBTENER PRODUCTOS ADMIN ===");
       const productos = await producto.getAllAdmin();
-      return res.status(200).json(productos);
+      console.log("Productos encontrados:", productos.length);
+      return res.status(200).json({
+        success: true,
+        data: productos,
+        message: "Productos obtenidos correctamente"
+      });
     } catch (error) {
       console.error('Error en getAllProductosAdmin:', error);
-      return res.status(500).json({ error: "Error interno en el servidor", detalle: error.message });
+      return res.status(500).json({ 
+        success: false,
+        error: "Error interno en el servidor", 
+        detalle: error.message 
+      });
     }
   };
 

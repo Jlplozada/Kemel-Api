@@ -1,9 +1,9 @@
-import connection from "../utils/db.js"
+import db from "../utils/db.js"
 
 class producto {
   async getAll() {
     try {
-      const [rows] = await connection.query("SELECT * FROM productos WHERE estado = 'activo'");
+      const [rows] = await db.query("SELECT * FROM productos WHERE estado = 'activo'");
       // Ajusta la ruta de la imagen para el frontend
       return rows.map(prod => ({
         ...prod,
@@ -17,7 +17,7 @@ class producto {
 
   async getById(id) {
     try {
-      const [rows] = await connection.query("SELECT * FROM productos WHERE id = ?", [id]);
+      const [rows] = await db.query("SELECT * FROM productos WHERE id = ?", [id]);
       if (rows[0]) {
         return {
           ...rows[0],
@@ -32,7 +32,7 @@ class producto {
 
   async create({ nombre, descripcion, precio, imagen, creado_por }) {
     try {
-      const [result] = await connection.query(
+      const [result] = await db.query(
         `INSERT INTO productos (nombre, descripcion, precio, imagen, creado_por) VALUES (?, ?, ?, ?, ?)`,
         [nombre, descripcion, precio, imagen, creado_por]
       );
@@ -55,7 +55,7 @@ class producto {
       query += ` WHERE id = ?`;
       params.push(id);
       
-      const [result] = await connection.query(query, params);
+      const [result] = await db.query(query, params);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error("Error al actualizar el producto");
@@ -65,7 +65,7 @@ class producto {
   async delete(id) {
     try {
       // Eliminación lógica: solo cambia el estado a 'eliminado'
-      const [result] = await connection.query("UPDATE productos SET estado = 'eliminado' WHERE id = ?", [id]);
+      const [result] = await db.query("UPDATE productos SET estado = 'eliminado' WHERE id = ?", [id]);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error("Error al eliminar el producto");
@@ -75,7 +75,7 @@ class producto {
   async getAllAdmin() {
     try {
       // Para administradores: obtener todos los productos sin filtrar por estado
-      const [rows] = await connection.query("SELECT * FROM productos ORDER BY created_at DESC");
+      const [rows] = await db.query("SELECT * FROM productos ORDER BY fecha_creacion DESC");
       return rows.map(prod => ({
         ...prod,
         imagen: prod.imagen ? `/img/${prod.imagen}` : null
@@ -89,7 +89,7 @@ class producto {
   async restaurar(id) {
     try {
       // Restaurar producto: cambiar estado a 'activo'
-      const [result] = await connection.query("UPDATE productos SET estado = 'activo' WHERE id = ?", [id]);
+      const [result] = await db.query("UPDATE productos SET estado = 'activo' WHERE id = ?", [id]);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error("Error al restaurar el producto");
@@ -102,7 +102,7 @@ class producto {
       console.log("ID:", id);
       console.log("Estado:", estado);
       
-      const [result] = await connection.query(
+      const [result] = await db.query(
         "UPDATE productos SET estado = ? WHERE id = ?",
         [estado, id]
       );

@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Rutas específicas primero (antes de rutas con parámetros)
 router.get("/admin/todos", productoController.getAllProductosAdmin);
+router.get("/admin", productoController.getAllProductosAdmin); // Nueva ruta para el frontend
 
 // Rutas con autenticación
 router.post("/", uploadSingle('imagen'), productoController.createProducto);
