@@ -74,8 +74,8 @@ class producto {
 
   async getAllAdmin() {
     try {
-      // Para administradores: obtener todos los productos sin filtrar por estado
-      const [rows] = await db.query("SELECT * FROM productos ORDER BY fecha_creacion DESC");
+      // Para administradores: obtener productos activos e inactivos, pero NO eliminados
+      const [rows] = await db.query("SELECT * FROM productos WHERE estado != 'eliminado' ORDER BY fecha_creacion DESC");
       return rows.map(prod => ({
         ...prod,
         imagen: prod.imagen ? `/img/${prod.imagen}` : null

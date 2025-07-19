@@ -3,7 +3,9 @@ import producto from "../models/productos.js";
 class productosController {
   static getAllProductos = async (req, res) => {
     try {
+      console.log("=== OBTENER PRODUCTOS PÚBLICO (SOLO ACTIVOS) ===");
       const productos = await producto.getAll();
+      console.log(`Productos activos encontrados: ${productos.length}`);
       return res.status(200).json(productos);
     } catch (error) {
       console.error('Error en getAllProductos:', error);
