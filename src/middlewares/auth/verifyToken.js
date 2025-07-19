@@ -7,8 +7,12 @@ dotenv.config();
 export function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;  
   
+  console.log('=== DEBUG VERIFY TOKEN ===');
+  console.log('Auth header:', authHeader);
+  
   // Validamos si la petición trae un token de autorización 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log('No hay header de autorización válido');
     return ResponseProvider.error(
       res,
       "Acceso denegado. Token no proporcionado",
@@ -18,8 +22,11 @@ export function verifyToken(req, res, next) {
   
   // Extraemos el token de la solicitud
   const token = authHeader.split(" ")[1];  
+  console.log('Token extraído:', token);
+  console.log('Token length:', token ? token.length : 0);
   
   if (!token) {
+    console.log('Token vacío después de extraer');
     return ResponseProvider.error(
       res,
       "Token inválido",
@@ -28,13 +35,16 @@ export function verifyToken(req, res, next) {
   } 
   
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);    
+    console.log('Intentando verificar token con REFRESH_TOKEN_SECRET');
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);    
+    console.log('Token decodificado exitosamente:', decoded);
     // Aquí tendrás todos los datos que firmaste en el token
     req.user = decoded;
     // Pasamos a la siguiente función
     next();
   } catch (error) {  
-    console.log(error);    
+    console.log('Error al verificar token:', error.message);
+    console.log('REFRESH_TOKEN_SECRET:', process.env.REFRESH_TOKEN_SECRET ? 'Definido' : 'No definido');
     return ResponseProvider.error(res, "Token inválido o expirado", 401);
   }
 }
@@ -60,7 +70,7 @@ export function optionalToken(req, res, next) {
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
     req.user = decoded;
     next();
   } catch (error) {

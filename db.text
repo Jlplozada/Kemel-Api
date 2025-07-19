@@ -169,11 +169,12 @@ VALUES ('admin', 'Administrador', 'admin123', 'admin@kemel.com', '1234567890', '
 -- Insertar productos de pan (creado_por = 1 corresponde al usuario admin)
 INSERT INTO productos (nombre, descripcion, precio, imagen, fecha_creacion, creado_por, estado)
 VALUES
-('Pan Integral', 'Pan elaborado con harina integral, alto en fibra y bajo en grasas.', 4500, 'src/img/pan_integral.jpg', NOW(), 1, 'activo'),
-('Pan Sin Gluten', 'Pan especial para personas con intolerancia al gluten, suave y nutritivo.', 5000, 'src/img/pan_sin_gluten.jpg', NOW(), 1, 'activo'),
-('Pan Multigrano', 'Pan con mezcla de granos y semillas, fuente de energía y proteínas.', 4800, 'src/img/pan_multigrano.jpg', NOW(), 1, 'activo'),
-('Pan Bajo en Sodio', 'Pan recomendado para dietas bajas en sal, ideal para hipertensos.', 4700, 'src/img/pan_bajo_sodio.jpg', NOW(), 1, 'activo'),
-('Pan Proteico', 'Pan enriquecido con proteínas, perfecto para deportistas y personas activas.', 5200, 'src/img/pan_proteico.jpg', NOW(), 1, 'activo');
+('Pan Manzana Verde 125g', 'Delicioso pan casero con trozos de manzana verde fresca, perfecto para el desayuno.', 16500, '1.png', NOW(), 1, 'activo'),
+('Pan Manzana Verde 200g', 'Delicioso pan casero con trozos de manzana verde fresca, perfecto para el desayuno. Tamaño familiar.', 26500, '2.png', NOW(), 1, 'activo'),
+('Pan Café Chocolate 125g', 'Exquisito pan con sabor a café y chips de chocolate, ideal para los amantes del café.', 16500, '1.png', NOW(), 1, 'activo'),
+('Pan Café Chocolate 200g', 'Exquisito pan con sabor a café y chips de chocolate, ideal para los amantes del café. Tamaño familiar.', 26500, '2.png', NOW(), 1, 'activo'),
+('Pan Banano Nuez 125g', 'Pan nutritivo con banano maduro y nueces crujientes, rico en potasio y omega 3.', 16500, '1.png', NOW(), 1, 'activo'),
+('Pan Banano Nuez 200g', 'Pan nutritivo con banano maduro y nueces crujientes, rico en potasio y omega 3. Tamaño familiar.', 26500, '2.png', NOW(), 1, 'activo');
 
 use kemelonline;
 select * from ciudades;

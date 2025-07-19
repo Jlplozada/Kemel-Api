@@ -7,11 +7,11 @@ import { ResponseProvider } from "../../providers/ResponseProvider.js";
 dotenv.config();
 
 export async function loginUsuario(req, res) {
-  const { email, clave } = req.body;
+  const { usuario, clave } = req.body;
   
   try {
-    // Buscar el usuario por email
-    const user = await usuarios.findByEmail(email);
+    // Buscar el usuario por nombre de usuario
+    const user = await usuarios.findByUsername(usuario);
     if (!user) {
       return ResponseProvider.unauthorized(
         res,
@@ -28,38 +28,32 @@ export async function loginUsuario(req, res) {
       );
     }
 
-    // Generar tokens incluyendo el rol del usuario
-    const accessToken = jwt.sign(
+    // Generar un solo token (refresh token) con duración según .env
+    const refreshToken = jwt.sign(
       { 
         id: user.id, 
         email: user.correo,
         nombre: user.nombre,
-        rol: user.rol || 'cliente' // Incluir el rol en el token
-      }, 
-      process.env.ACCESS_TOKEN_SECRET || "secreto_access", 
-      { expiresIn: "15m" }
-    );
-
-    const refreshToken = jwt.sign(
-      { 
-        id: user.id, 
-        email: user.correo, 
-        rol: user.rol || 'cliente' // Incluir el rol en el refresh token también
+        rol: user.rol || 'cliente'
       }, 
       process.env.REFRESH_TOKEN_SECRET || "secreto_refresh", 
-      { expiresIn: "7d" }
+      { expiresIn: process.env.TOKEN_EXPIRATION || "10m" }
     );
+
+    console.log('=== DEBUG LOGIN ===');
+    console.log('Token generado:', refreshToken);
+    console.log('REFRESH_TOKEN_SECRET:', process.env.REFRESH_TOKEN_SECRET ? 'Definido' : 'No definido');
+    console.log('TOKEN_EXPIRATION:', process.env.TOKEN_EXPIRATION);
 
     // Guardar el refresh token en la base de datos
     await usuarios.updateRefreshToken(user.id, refreshToken);
 
-    // Enviar respuesta exitosa incluyendo el rol
+    // Enviar respuesta exitosa con un solo token
     return ResponseProvider.success(
       res,
       "Login exitoso",
       {
-        token: accessToken,
-        refreshToken: refreshToken,
+        token: refreshToken, // Solo un token
         usuario: {
           id: user.id,
           nombre: user.nombre,
@@ -67,7 +61,7 @@ export async function loginUsuario(req, res) {
           telefono: user.telefono,
           direccion: user.direccion,
           ciudad: user.ciudad,
-          rol: user.rol || 'cliente' // Incluir el rol en la respuesta
+          rol: user.rol || 'cliente'
         }
       }
     );

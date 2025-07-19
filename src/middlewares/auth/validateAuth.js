@@ -83,17 +83,16 @@ export function validateRegistro(req, res, next) {
  * Middleware para validar datos de login
  */
 export function validateLogin(req, res, next) {
-  const { email, clave } = req.body;
+  const { usuario, clave } = req.body;
   const errors = {};
 
-  // Validar email
-  if (!email || typeof email !== 'string') {
-    errors.email = "El email es requerido";
-  } else {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      errors.email = "El formato del email no es válido";
-    }
+  // Validar usuario
+  if (!usuario || typeof usuario !== 'string') {
+    errors.usuario = "El nombre de usuario es requerido";
+  } else if (usuario.trim().length < 1) {
+    errors.usuario = "El nombre de usuario no puede estar vacío";
+  } else if (usuario.trim().length > 100) {
+    errors.usuario = "El nombre de usuario no puede exceder 100 caracteres";
   }
 
   // Validar clave
@@ -113,7 +112,7 @@ export function validateLogin(req, res, next) {
   }
 
   // Limpiar los datos
-  req.body.email = email.trim().toLowerCase();
+  req.body.usuario = usuario.trim();
 
   next();
 }
