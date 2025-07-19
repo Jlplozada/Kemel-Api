@@ -16,12 +16,17 @@ class productosController {
   static getProductoById = async (req, res) => {
     try {
       const { id } = req.params;
+      console.log('Buscando producto con ID:', id);
       const prod = await producto.getById(id);
-      if (!prod) return res.status(404).json({ error: "Producto no encontrado" });
-      return res.status(200).json(prod);
+      if (!prod) {
+        console.log('Producto no encontrado');
+        return res.status(404).json({ success: false, error: "Producto no encontrado" });
+      }
+      console.log('Producto encontrado:', prod);
+      return res.status(200).json({ success: true, data: prod });
     } catch (error) {
       console.error('Error en getProductoById:', error);
-      return res.status(500).json({ error: "Error interno en el servidor", detalle: error.message });
+      return res.status(500).json({ success: false, error: "Error interno en el servidor", detalle: error.message });
     }
   };
 
