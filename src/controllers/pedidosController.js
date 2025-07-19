@@ -99,7 +99,7 @@ export const pedidosController = {
       console.log("=== OBTENER PEDIDOS PENDIENTES ===");
       console.log("Usuario autenticado:", req.user);
 
-      const pedidos = await Pedidos.findByEstado('pendiente');
+      const pedidos = await Pedidos.findByEstado('aprobado');
       
       console.log("Pedidos encontrados:", pedidos.length);
       console.log("Primer pedido (si existe):", pedidos[0]);

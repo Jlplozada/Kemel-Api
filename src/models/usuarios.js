@@ -228,15 +228,15 @@ export class usuarios{
     }
 
     // Actualizar estado de usuario
-    static async updateEstado(id, estado_registro) {
+    static async updateEstado(id, estado) {
         try {
             console.log("=== UPDATE ESTADO USUARIO MODEL ===");
             console.log("ID:", id);
-            console.log("Nuevo estado:", estado_registro);
+            console.log("Nuevo estado:", estado);
             
             const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = ? WHERE id = ?",
-                [estado_registro, id]
+                "UPDATE usuarios SET estado = ? WHERE id = ?",
+                [estado, id]
             );
             
             console.log("Resultado de actualización:", result);
@@ -248,11 +248,11 @@ export class usuarios{
     }
 
     // Actualizar estado de usuario
-    static async updateEstado(id, estado_registro) {
+    static async updateEstado(id, estado) {
         try {
             const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = ? WHERE id = ?",
-                [estado_registro, id]
+                "UPDATE usuarios SET estado = ? WHERE id = ?",
+                [estado, id]
             );
             return result;
         } catch (error) {
@@ -265,7 +265,7 @@ export class usuarios{
     static async delete(id) {
         try {
             const [result] = await db.query(
-                "UPDATE usuarios SET estado_registro = 'inactivo' WHERE id = ?",
+                "UPDATE usuarios SET estado = 'eliminado' WHERE id = ?",
                 [id]
             );
             return result;

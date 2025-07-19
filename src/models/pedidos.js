@@ -1,9 +1,9 @@
-import connection from "../utils/db.js";
+import db from "../utils/db.js";
 
 export class Pedidos {
   static async getAll() {
     try {
-      const [rows] = await connection.query("SELECT * FROM pedidos");
+      const [rows] = await db.query("SELECT * FROM pedidos");
       return rows;
     } catch (error) {
       throw new Error("Error al obtener los pedidos");
@@ -19,7 +19,7 @@ export class Pedidos {
       const { usuario_id, total, direccion_entrega, ciudad_id, estado = 'pendiente', nombre } = pedidoData;
 
       // Crear el pedido principal
-      const [result] = await connection.query(
+      const [result] = await db.query(
         `INSERT INTO pedidos 
           (nombre, usuario_id, total, direccion_entrega, ciudad_id, estado) 
          VALUES (?, ?, ?, ?, ?, ?)`,
@@ -33,7 +33,7 @@ export class Pedidos {
         console.log("Procesando producto:", producto);
         
         // Buscar el producto_id por nombre
-        const [productoRows] = await connection.query(
+        const [productoRows] = await db.query(
           "SELECT id FROM productos WHERE nombre = ?",
           [producto.nombre]
         );
@@ -47,7 +47,7 @@ export class Pedidos {
         console.log(`Producto ${producto.nombre} tiene ID:`, producto_id);
 
         // Insertar en la tabla de relación
-        await connection.query(
+        await db.query(
           "INSERT INTO pedido_detalles (nombre, pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?, ?)",
           [producto.nombre, pedidoId, producto_id, producto.cantidad, producto.precio, producto.subtotal]
         );
@@ -63,12 +63,12 @@ export class Pedidos {
 
   static async getByUsuario(usuario_id) {
     try {
-      const [rows] = await connection.query(
-        `SELECT p.*, u.nombre as usuario_nombre, u.email as usuario_email
+      const [rows] = await db.query(
+        `SELECT p.*, u.nombre as usuario_nombre, u.correo as usuario_email
          FROM pedidos p 
          JOIN usuarios u ON p.usuario_id = u.id 
          WHERE p.usuario_id = ? 
-         ORDER BY p.fecha_creacion DESC`,
+         ORDER BY p.fecha_pedido DESC`,
         [usuario_id]
       );
       return rows;
@@ -79,7 +79,7 @@ export class Pedidos {
 
   static async updateEstado(pedido_id, estado) {
     try {
-      const [result] = await connection.query(
+      const [result] = await db.query(
         "UPDATE pedidos SET estado = ? WHERE id = ?",
         [estado, pedido_id]
       );
@@ -95,10 +95,11 @@ export class Pedidos {
       console.log("=== MODELO: Buscando pedidos con estado:", estado, "===");
       
       // Primero obtener los pedidos básicos
-      const [pedidos] = await connection.query(`
+      const [pedidos] = await db.query(`
         SELECT 
           p.*, 
-          u.nombre as nombre_usuario
+          u.nombre as nombre_usuario,
+          u.telefono as telefono_usuario
         FROM pedidos p
         LEFT JOIN usuarios u ON p.usuario_id = u.id
         WHERE p.estado = ? AND p.estado_registro = 'activo'
@@ -116,7 +117,7 @@ export class Pedidos {
       for (let pedido of pedidos) {
         console.log(`Buscando productos para pedido ID: ${pedido.id}`);
         
-        const [productos] = await connection.query(`
+        const [productos] = await db.query(`
           SELECT 
             pd.cantidad,
             pd.precio_unitario,
@@ -159,7 +160,8 @@ export class Pedidos {
       let query = `
         SELECT 
           p.*, 
-          u.nombre as nombre_usuario
+          u.nombre as nombre_usuario,
+          u.telefono as telefono_usuario
         FROM pedidos p
         LEFT JOIN usuarios u ON p.usuario_id = u.id
         WHERE p.estado_registro = 'activo'
@@ -174,7 +176,7 @@ export class Pedidos {
       
       query += ' ORDER BY p.fecha_pedido DESC';
       
-      const [pedidos] = await connection.query(query, params);
+      const [pedidos] = await db.query(query, params);
       
       console.log("Pedidos básicos encontrados:", pedidos.length);
       
@@ -187,7 +189,7 @@ export class Pedidos {
       for (let pedido of pedidos) {
         console.log(`Buscando productos para pedido ID: ${pedido.id}`);
         
-        const [productos] = await connection.query(`
+        const [productos] = await db.query(`
           SELECT 
             pd.cantidad,
             pd.precio_unitario,
@@ -224,7 +226,7 @@ export class Pedidos {
   // Eliminar pedido (cambiar estado_registro a eliminado)
   static async delete(pedido_id) {
     try {
-      const [result] = await connection.query(
+      const [result] = await db.query(
         "UPDATE pedidos SET estado_registro = 'eliminado' WHERE id = ?",
         [pedido_id]
       );
@@ -242,7 +244,7 @@ export class Pedidos {
       console.log("Buscando pedido ID:", pedido_id);
 
       // Obtener información del pedido y cliente
-      const [pedidoRows] = await connection.query(`
+      const [pedidoRows] = await db.query(`
         SELECT 
           p.id,
           p.nombre,
@@ -250,7 +252,6 @@ export class Pedidos {
           p.total,
           p.estado,
           p.direccion_entrega,
-          p.notas,
           u.id as cliente_id,
           u.nombre as cliente_nombre,
           u.correo as cliente_correo,
@@ -269,18 +270,19 @@ export class Pedidos {
       const pedidoData = pedidoRows[0];
       console.log("Pedido encontrado:", pedidoData);
 
-      // Obtener productos del pedido
-      const [productosRows] = await connection.query(`
+      // Obtener productos del pedido - usar pedido_detalles en lugar de pedido_productos
+      const [productosRows] = await db.query(`
         SELECT 
-          pr.id,
-          pr.nombre,
+          pd.nombre,
+          pd.cantidad,
+          pd.precio_unitario,
+          pd.subtotal,
           pr.descripcion,
-          pr.precio as precio_unitario,
           pr.imagen,
-          pp.cantidad
-        FROM pedido_productos pp
-        INNER JOIN productos pr ON pp.producto_id = pr.id
-        WHERE pp.pedido_id = ?
+          pr.id as producto_id
+        FROM pedido_detalles pd
+        LEFT JOIN productos pr ON pd.producto_id = pr.id
+        WHERE pd.pedido_id = ? AND pd.estado_registro = 'activo'
       `, [pedido_id]);
 
       console.log("Productos encontrados:", productosRows);
@@ -293,8 +295,7 @@ export class Pedidos {
           fecha_pedido: pedidoData.fecha_pedido,
           total: pedidoData.total,
           estado: pedidoData.estado,
-          direccion_entrega: pedidoData.direccion_entrega,
-          notas: pedidoData.notas
+          direccion_entrega: pedidoData.direccion_entrega
         },
         cliente: {
           id: pedidoData.cliente_id,
