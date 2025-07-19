@@ -4,8 +4,19 @@ import { ResponseProvider } from "../../providers/ResponseProvider.js";
  * Middleware para validar datos de registro de usuario
  */
 export function validateRegistro(req, res, next) {
-  const { nombre, email, password, telefono, direccion, ciudad } = req.body;
+  const { usuario, nombre, email, password, telefono, direccion, ciudad } = req.body;
   const errors = {};
+
+  // Validar usuario
+  if (!usuario || typeof usuario !== 'string') {
+    errors.usuario = "El nombre de usuario es requerido";
+  } else if (usuario.trim().length < 3) {
+    errors.usuario = "El nombre de usuario debe tener al menos 3 caracteres";
+  } else if (usuario.trim().length > 50) {
+    errors.usuario = "El nombre de usuario no puede exceder 50 caracteres";
+  } else if (!/^[a-zA-Z0-9_]+$/.test(usuario.trim())) {
+    errors.usuario = "El nombre de usuario solo puede contener letras, números y guiones bajos";
+  }
 
   // Validar nombre
   if (!nombre || typeof nombre !== 'string') {

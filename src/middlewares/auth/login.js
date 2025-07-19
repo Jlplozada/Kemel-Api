@@ -10,8 +10,14 @@ export async function loginUsuario(req, res) {
   const { usuario, clave } = req.body;
   
   try {
-    // Buscar el usuario por nombre de usuario
-    const user = await usuarios.findByUsername(usuario);
+    // Buscar el usuario por nombre de usuario o por email
+    let user = await usuarios.findByUsername(usuario);
+    
+    // Si no se encuentra por username, intentar buscar por email
+    if (!user) {
+      user = await usuarios.findByEmail(usuario);
+    }
+    
     if (!user) {
       return ResponseProvider.unauthorized(
         res,

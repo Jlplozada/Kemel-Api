@@ -26,38 +26,40 @@ export class usuarios{
         return rows[0];
     }
     
-    static async create(nombre, email, hashedPassword, telefono = null, direccion = null, ciudad_id = null){
+    static async create(usuario, nombre, email, hashedPassword, telefono = null, direccion = null, ciudad_id = null){
         try {
             console.log('=== MODELO CREATE ===');
-            console.log('Creando usuario:', { nombre, email, telefono, direccion, ciudad_id });
+            console.log('Creando usuario:', { usuario, nombre, email, telefono, direccion, ciudad_id });
             
             // Convertir ciudad_id a número si es string, o null si está vacío
             const ciudadIdFinal = ciudad_id ? parseInt(ciudad_id) : null;
             console.log('Ciudad ID final:', ciudadIdFinal);
             
-            // Generar un nombre de usuario único basado en el email
-            // Tomamos la parte antes del @ y le agregamos un número aleatorio si es necesario
-            const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-            let usuario = baseUsername;
-            console.log('Username base generado:', usuario);
+            // Usar el nombre de usuario proporcionado, pero verificar que sea único
+            let usuarioFinal = usuario.toLowerCase().replace(/[^a-z0-9]/g, '');
+            console.log('Username proporcionado:', usuarioFinal);
             
-            // Verificar si el nombre de usuario ya existe y generar uno único
+            // Verificar si el nombre de usuario ya existe y generar uno único si es necesario
             let counter = 1;
+            const baseUsername = usuarioFinal;
             console.log('Verificando unicidad del username...');
-            while (await this.findByUsername(usuario)) {
-                console.log(`Username ${usuario} ya existe, probando ${baseUsername}${counter}`);
-                usuario = `${baseUsername}${counter}`;
+            while (await this.findByUsername(usuarioFinal)) {
+                console.log(`Username ${usuarioFinal} ya existe, probando ${baseUsername}${counter}`);
+                usuarioFinal = `${baseUsername}${counter}`;
                 counter++;
             }
-            console.log('Username final:', usuario);
+            console.log('Username final:', usuarioFinal);
 
             console.log('Ejecutando query INSERT...');
             const [result] = await db.query(
                 "INSERT INTO usuarios(usuario, nombre, correo, clave, telefono, direccion, ciudad_id) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                [usuario, nombre, email, hashedPassword, telefono, direccion, ciudadIdFinal]
+                [usuarioFinal, nombre, email, hashedPassword, telefono, direccion, ciudadIdFinal]
             );
             console.log('Query ejecutado exitosamente, insertId:', result.insertId);
-            return result.insertId;
+            return {
+                id: result.insertId,
+                usuario: usuarioFinal // Devolver el nombre de usuario final (puede tener número si hubo duplicado)
+            };
         } catch (error) {
             console.error('Error en modelo usuarios.create:', error);
             throw error;

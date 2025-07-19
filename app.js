@@ -14,7 +14,7 @@ import db from './src/utils/db.js';
 dotenv.config();
 
 const app = express();
-const port= 5010;
+const port= 4000;
 
 // Solución para __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url);

@@ -23,22 +23,34 @@ router.delete('/:id', verifyToken, verificarRol('admin'), UsuariosController.eli
 
 // Ruta para registrar un nuevo usuario
 router.post('/registro', validateRegistro, async (req, res) => {
-  const { nombre, email, password, telefono, direccion, ciudad } = req.body;
+  const { usuario, nombre, email, password, telefono, direccion, ciudad } = req.body;
   
   console.log('=== INICIO REGISTRO ===');
-  console.log('Datos recibidos:', { nombre, email, password: '***', telefono, direccion, ciudad });
+  console.log('Datos recibidos:', { usuario, nombre, email, password: '***', telefono, direccion, ciudad });
   
   try {
     console.log('Buscando usuario existente...');
-    // Verificar si el usuario ya existe
-    const usuarioExistente = await usuarios.findByEmail(email);
-    console.log('Usuario existente:', usuarioExistente ? 'SÍ' : 'NO');
+    // Verificar si el usuario ya existe (por email o por username)
+    const usuarioExistentePorEmail = await usuarios.findByEmail(email);
+    const usuarioExistentePorUsername = await usuarios.findByUsername(usuario);
     
-    if (usuarioExistente) {
-      console.log('Error: Usuario ya existe');
+    console.log('Usuario existente por email:', usuarioExistentePorEmail ? 'SÍ' : 'NO');
+    console.log('Usuario existente por username:', usuarioExistentePorUsername ? 'SÍ' : 'NO');
+    
+    if (usuarioExistentePorEmail) {
+      console.log('Error: Usuario ya existe con ese email');
       return ResponseProvider.error(
         res, 
         "Ya existe un usuario con este email",
+        400
+      );
+    }
+    
+    if (usuarioExistentePorUsername) {
+      console.log('Error: Username ya existe');
+      return ResponseProvider.error(
+        res, 
+        "Ya existe un usuario con este nombre de usuario",
         400
       );
     }
@@ -49,15 +61,21 @@ router.post('/registro', validateRegistro, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log('Contraseña encriptada exitosamente');
 
-    // Crear el usuario (ciudad se pasa como ciudad_id)
-    console.log('Intentando crear usuario con datos:', { nombre, email, telefono, direccion, ciudad });
-    const userId = await usuarios.create(nombre, email, hashedPassword, telefono, direccion, ciudad);
-    console.log('Usuario creado exitosamente con ID:', userId);
+    // Crear el usuario (ahora pasamos el usuario como primer parámetro)
+    console.log('Intentando crear usuario con datos:', { usuario, nombre, email, telefono, direccion, ciudad });
+    const nuevoUsuario = await usuarios.create(usuario, nombre, email, hashedPassword, telefono, direccion, ciudad);
+    console.log('Usuario creado exitosamente:', nuevoUsuario);
 
     return ResponseProvider.success(
       res,
       "Usuario registrado exitosamente",
-      { userId: userId },
+      { 
+        userId: nuevoUsuario.id,
+        usuario: nuevoUsuario.usuario,
+        mensaje: nuevoUsuario.usuario !== usuario ? 
+          `Tu nombre de usuario final es: ${nuevoUsuario.usuario} (se modificó para evitar duplicados)` :
+          `Tu nombre de usuario es: ${nuevoUsuario.usuario}`
+      },
       201
     );
 
